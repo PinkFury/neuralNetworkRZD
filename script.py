@@ -1,4 +1,3 @@
-import keras
 import string
 import nltk
 nltk.download('stopwords')
@@ -6,50 +5,58 @@ import tensorflow as tf
 from nltk.corpus import stopwords
 from collections import Counter
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Embedding, MaxPooling1D, Conv1D, GlobalMaxPooling1D, Dropout, LSTM, GRU, SpatialDropout1D
+from tensorflow.keras.layers import Dense, Embedding, LSTM
 from tensorflow.keras import utils
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras import utils
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 
 def remove_punct(text):
     table = str.maketrans("", "", string.punctuation)
     return text.translate(table)
 
-
 def remove_stopwords(text):
     text = [word.lower() for word in text.split() if word.lower() not in stop]
 
     return " ".join(text)
-
-# Count unique words
-def counter_word(text):
-    count = Counter()
-    for i in text.values:
-        for word in i.split():
-            count[word] += 1
-    return count
 
 # Максимальное количество слов 
 num_words = 50000
 # Максимальная длина новости
 #max_news_len = 87672
 max_news_len = 2000
-f = open("G:\\Polytech project\\project\\text.txt", "w", encoding = "utf-8")
 # Количество классов новостей
 nb_classes = 5
 dtypes = {'title': 'str', 'text':'str','category': 'int'}
-train = pd.read_csv('G:\\Polytech project\\project\\dataset_train.csv', 
+train = pd.read_csv('C:\\Users\\Root\\Desktop\\Проекты\\Диплом\\ML correct\\neuralNetworkRZD\\dataset.csv', 
                     header=0, 
                     names=['title','text','category'],
                     delimiter=";",dtype=dtypes)
+
+print("Всего данных:% d."% len(train))
+print(train.sample(10))
+print("Всего в столбце category% d нулевых значений."% train['category'].isnull(). sum())
+print("Всего в столбце text% d нулевых значений."% train['text'].isnull().sum())
+print("Всего в столбце title% d нулевых значений."% train['title'].isnull().sum())
+train = train.dropna()
+d = {'cat':train['category'].value_counts().index, 'count': train['category'].value_counts()}
+df_cat = pd.DataFrame(data=d).reset_index(drop=True)
+print("Всего данных в каждой категории:")
+print(df_cat)
+
+train['title'] = train['title'].map(lambda x: remove_punct(x))
+train['text'] = train['text'].map(lambda x: remove_punct(x))
+stop = set(stopwords.words("russian"))
+train['title'] = train['title'].map(remove_stopwords)
+train['text'] = train['text'].map(remove_stopwords)
+
+'''
 train = train.dropna()
 train['title'] = train['title'].map(lambda x: remove_punct(x))
-train['text'] = train['title'].map(lambda x: remove_punct(x))
+train['text'] = train['text'].map(lambda x: remove_punct(x))
 stop = set(stopwords.words("russian"))
 train['title'] = train['title'].map(remove_stopwords)
 train['text'] = train['text'].map(remove_stopwords)
@@ -69,28 +76,7 @@ index = 1
 #print(news[index])
 #print(sequences[index])
 x_train = pad_sequences(sequences, maxlen=max_news_len)
-'''
-model_gru = Sequential()
-model_gru.add(Embedding(num_words, 32, input_length=max_news_len))
-model_gru.add(GRU(16))
-model_gru.add(Dense(5, activation='softmax'))
-model_gru.compile(optimizer='adam', 
-              loss='categorical_crossentropy', 
-              metrics=['accuracy'])
-model_gru.summary()
-model_gru_save_path = 'C:\\Users\\PinkFury\\Desktop\\project\\best_model_gru.h5'
-checkpoint_callback_gru = ModelCheckpoint(model_gru_save_path, 
-                                      monitor='val_accuracy',
-                                      save_best_only=True,
-                                      verbose=1)
-history_gru = model_gru.fit(x_train, 
-                              y_train, 
-                              epochs=5,
-                             batch_size=128,
-                            validation_split=0.1,
-                           callbacks=[checkpoint_callback_gru])
 
-'''
 
 model_lstm = Sequential()
 model_lstm.add(Embedding(num_words, 2100, input_length=max_news_len))
@@ -143,3 +129,5 @@ plt.xlabel('Эпоха обучения')
 plt.ylabel('Доля верных ответов')
 plt.legend()
 plt.show()
+
+'''
